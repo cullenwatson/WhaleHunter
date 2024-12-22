@@ -4,19 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 func SignIn(creds Credentials) (string, error) {
-	return signInWithRetry(creds, false)
+	return signInWithRetry(creds, "", false)
 }
 
-func signInWithRetry(creds Credentials, isRetry bool) (string, error) {
+func signInWithRetry(creds Credentials, captchaResponse string, isRetry bool) (string, error) {
 	url := "https://www.tradingview.com/accounts/signin/"
 
 	var b bytes.Buffer
@@ -25,6 +24,13 @@ func signInWithRetry(creds Credentials, isRetry bool) (string, error) {
 	_ = w.WriteField("username", creds.Username)
 	_ = w.WriteField("password", creds.Password)
 	_ = w.WriteField("remember", "true")
+	if captchaResponse != "" {
+		_ = w.WriteField("g-recaptcha-response-v2", captchaResponse)
+	}
+	err := w.Close()
+	if err != nil {
+		return "", fmt.Errorf("error closing multipart writer: %v", err)
+	}
 
 	req, err := http.NewRequest("POST", url, &b)
 	if err != nil {
@@ -71,12 +77,10 @@ func signInWithRetry(creds Credentials, isRetry bool) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("failed to solve captcha: %v", err)
 			}
-			_ = w.WriteField("g-recaptcha-response-v2", captchaResponse)
-			return signInWithRetry(creds, true)
+			return signInWithRetry(creds, captchaResponse, true)
 		}
 		return "", fmt.Errorf("login failed: %s", loginResp.Error)
 	}
-	w.Close()
 
 	return loginResp.User.AuthToken, nil
 }

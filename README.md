@@ -1,5 +1,5 @@
 # Roadmap
-1. ~~Sign into TradingView~~ and solve the captcha
+1. ~~Sign into TradingView and solve the captcha~~
 * Save the cookies in case restart of program
 2. Start websocket connection to TradingView
 3. Load desired chart template
