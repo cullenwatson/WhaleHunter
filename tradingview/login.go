@@ -8,11 +8,56 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
+const tokenFile = "auth_token.txt"
+
+func getTokenPath() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return tokenFile
+	}
+	return filepath.Join(homeDir, ".tradingview", tokenFile)
+}
+
+func saveAuthToken(token string) error {
+	tokenPath := getTokenPath()
+	dir := filepath.Dir(tokenPath)
+
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return fmt.Errorf("failed to create directory: %v", err)
+	}
+
+	return os.WriteFile(tokenPath, []byte(token), 0600)
+}
+
+func loadAuthToken() (string, error) {
+	tokenPath := getTokenPath()
+	data, err := os.ReadFile(tokenPath)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
 func SignIn(creds Credentials) (string, error) {
-	return signInWithRetry(creds, "", false)
+	if token, err := loadAuthToken(); err == nil {
+		return token, nil
+	}
+
+	token, err := signInWithRetry(creds, "", false)
+	if err != nil {
+		return "", err
+	}
+
+	if err := saveAuthToken(token); err != nil {
+		log.Warn().Err(err).Msg("Failed to save auth token")
+	}
+
+	return token, nil
 }
 
 func signInWithRetry(creds Credentials, captchaResponse string, isRetry bool) (string, error) {
