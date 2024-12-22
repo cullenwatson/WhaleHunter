@@ -7,24 +7,16 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
-type Credentials struct {
-	Username string
-	Password string
-}
-
-type LoginResponse struct {
-	Error string `json:"error"`
-	User  struct {
-		ID        int    `json:"id"`
-		Username  string `json:"username"`
-		AuthToken string `json:"auth_token"`
-	} `json:"user"`
-}
-
-// SignIn attempts to login to TradingView and returns the auth token
 func SignIn(creds Credentials) (string, error) {
+	return signInWithRetry(creds, false)
+}
+
+func signInWithRetry(creds Credentials, isRetry bool) (string, error) {
 	url := "https://www.tradingview.com/accounts/signin/"
 
 	var b bytes.Buffer
@@ -33,9 +25,7 @@ func SignIn(creds Credentials) (string, error) {
 	_ = w.WriteField("username", creds.Username)
 	_ = w.WriteField("password", creds.Password)
 	_ = w.WriteField("remember", "true")
-	w.Close()
 
-	// Create request
 	req, err := http.NewRequest("POST", url, &b)
 	if err != nil {
 		return "", fmt.Errorf("error creating request: %v", err)
@@ -72,8 +62,21 @@ func SignIn(creds Credentials) (string, error) {
 	}
 
 	if loginResp.Error != "" {
+		log.Error().
+			Str("error", loginResp.Error).
+			Msg("TradingView login error occurred")
+
+		if strings.Contains(strings.ToLower(loginResp.Error), "captcha") && !isRetry {
+			captchaResponse, err := solveCaptcha()
+			if err != nil {
+				return "", fmt.Errorf("failed to solve captcha: %v", err)
+			}
+			_ = w.WriteField("g-recaptcha-response-v2", captchaResponse)
+			return signInWithRetry(creds, true)
+		}
 		return "", fmt.Errorf("login failed: %s", loginResp.Error)
 	}
+	w.Close()
 
 	return loginResp.User.AuthToken, nil
 }
