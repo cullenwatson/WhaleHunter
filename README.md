@@ -14,3 +14,21 @@
 
 - they dont auto sign into acc
 - they dont give custom indicator values that are only available in your acc (private scripts)
+
+
+usage
+```go
+func main() {
+	LoadEnvVars()
+
+	authToken := GetAuthToken()
+
+	symbol := "AAPL"
+	timeframe := "1D"
+	candles := 100
+
+	client := CreateTradingViewClient(symbol, timeframe, candles, authToken)
+
+	RunTradingViewClient(client)
+}
+```
