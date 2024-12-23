@@ -1,4 +1,4 @@
-package tradingview
+package models
 
 type Credentials struct {
 	Username string

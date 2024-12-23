@@ -1,7 +1,8 @@
 # Roadmap
 1. ~~Sign into TradingView and solve the captcha~~
 * ~~Save the cookies in case restart of program~~
-2. Start websocket connection to TradingView
+2. ~~Start websocket connection to TradingView~~
+   * fetch the exchange automatically to just input a ticker
 3. Load desired chart template
 4. Load desired stock symbols and timeframe
 
