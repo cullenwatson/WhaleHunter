@@ -4,8 +4,9 @@ Goal - auto place option trades based on custom indicators and whale option volu
 1. ~~Sign into TradingView and solve the captcha~~
 * ~~Save the cookies in case restart of program~~
 2. ~~Start websocket connection to TradingView~~
-3. Receive and parse stock feed and custom indicator data
-4. Support concurrent connection feeds to multiple stock symbols
+3. ~~Receive and parse stock feed~~
+4. Receive custom indicator data
+5. Support concurrent connection feeds to multiple stock symbols
 
 #### why not other repos for Phase 1
 
@@ -61,11 +62,6 @@ func main() {
 ```
 #### current output
 ```bash
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #91 => Date=2024-12-20 O=129.81 H=135.28 L=128.22 C=134.70 Vol=306528553
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #92 => Date=2024-12-23 O=136.28 H=139.79 L=135.12 C=139.67 Vol=176053506
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #93 => Date=2024-12-24 O=140.00 H=141.90 L=138.65 C=140.22 Vol=105156989
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #94 => Date=2024-12-26 O=139.70 H=140.85 L=137.73 C=139.93 Vol=116519090
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #95 => Date=2024-12-27 O=138.55 H=139.02 L=134.71 C=137.01 Vol=170582603
 2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #96 => Date=2024-12-30 O=134.83 H=140.27 L=134.02 C=137.49 Vol=167734700
 2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #97 => Date=2024-12-31 O=138.03 H=138.07 L=133.83 C=134.29 Vol=155659211
 2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #98 => Date=2025-01-02 O=136.00 H=138.88 L=134.63 C=138.31 Vol=198247166
