@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/cullenwatson/WhaleHunter/model"
 	"github.com/rs/zerolog/log"
 	"io"
 	"mime/multipart"
@@ -11,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"tw-scanner/models"
 )
 
 const tokenFile = "auth_token.txt"
@@ -44,7 +44,7 @@ func loadAuthToken() (string, error) {
 	return string(data), nil
 }
 
-func SignIn(creds models.Credentials) (string, error) {
+func SignIn(creds model.Credentials) (string, error) {
 	if token, err := loadAuthToken(); err == nil {
 		return token, nil
 	}
@@ -61,7 +61,7 @@ func SignIn(creds models.Credentials) (string, error) {
 	return token, nil
 }
 
-func signInWithRetry(creds models.Credentials, captchaResponse string, isRetry bool) (string, error) {
+func signInWithRetry(creds model.Credentials, captchaResponse string, isRetry bool) (string, error) {
 	url := "https://www.tradingview.com/accounts/signin/"
 
 	var b bytes.Buffer
@@ -108,7 +108,7 @@ func signInWithRetry(creds models.Credentials, captchaResponse string, isRetry b
 		return "", fmt.Errorf("login failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
-	var loginResp models.LoginResponse
+	var loginResp model.LoginResponse
 	if err := json.Unmarshal(body, &loginResp); err != nil {
 		return "", fmt.Errorf("error parsing response: %v", err)
 	}

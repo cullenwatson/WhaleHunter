@@ -1,4 +1,4 @@
-package models
+package model
 
 type Credentials struct {
 	Username string

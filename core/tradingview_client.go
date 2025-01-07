@@ -95,6 +95,7 @@ func (tv *TradingViewClient) SendMessage(functionName string, params interface{}
 func (tv *TradingViewClient) Run() error {
 	// 1. Generate a chart session
 	chartSession := generateChartSession()
+	fmt.Println("chartSession:", tv.Symbol)
 
 	// 2. Build a JSON-like string referencing the symbol
 	symbolString := fmt.Sprintf("={\"adjustment\":\"splits\",\"currency-id\":\"USD\",\"session\":\"regular\",\"symbol\":\"%s\"}", tv.Symbol)
