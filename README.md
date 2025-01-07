@@ -1,38 +1,65 @@
 # Roadmap
 Goal - auto place option trades based on custom indicators and whale option volume
+### Phase 1 - TradingView connection
 1. ~~Sign into TradingView and solve the captcha~~
 * ~~Save the cookies in case restart of program~~
 2. ~~Start websocket connection to TradingView~~
-3. Load desired chart template and indicators
-4. Load multiple desired stock symbols and timeframe
+3. Receive and parse stock feed and custom indicator data
+4. Support concurrent connection feeds to multiple stock symbols
 
-5. Receive and parse stock feed and custom indicator data
-6. Support concurrent connection feeds to multiple stock symbols
-
-
-## why not other repos
+#### why not other repos for Phase 1
 
 - they dont auto sign into acc
 - they dont give custom indicator values that are only available in your acc (private scripts)
 
+### Phase 2 - UnusualWhales
+1. Connect to unusualwhales or cheddarflow
+2. Allow custom tracking / filters
 
-usage
+### Phase 3 - Merge phase 1 & 2 for confluence
+1. Connect the TradingView and unusualwhale microservice
+2. Alert if both are confluent
+
+### Phase 4 - Auto trade
+1. ThinkOrSwim microservice
+2. Auto purchase the option
+3. Highly configurable for the trades desired
+4. set take profit / stop loss and monitor win rate
+5. View open positions
+
+#### current usage
 ```go
 func main() {
-	LoadEnvVars()
+    LoadEnvVars()
 
-	authToken := GetAuthToken()
+    authToken := GetAuthToken()
 
-	symbol := "AAPL"
-	timeframe := "1D"
-	candles := 100
+    symbol := "NVDA"
+    timeframe := "1D"
+    candlesRequested := 100
 
-	client := CreateTradingViewClient(symbol, timeframe, candles, authToken)
+    client := CreateTradingViewClient(symbol, timeframe, candlesRequested, authToken)
 
-	RunTradingViewClient(client)
+    candleChan := make(chan []model.Candle)
+    go RunTradingViewClient(client, candleChan)
+
+    // Listen for new candles
+    for candleBatch := range candleChan {
+        for i, c := range candleBatch {
+            log.Info().Msgf(
+                "[MAIN] %s Candle #%d => Date=%s O=%.2f H=%.2f L=%.2f C=%.2f Vol=%.0f",
+                symbol,
+                i+1,
+                c.Date.Format("2006-01-02"),
+                c.Open, c.High, c.Low, c.Close, c.Volume,
+            )
+        }
+    }
+
+    log.Info().Msg("Candle channel closed. Exiting.")
 }
 ```
-current output
+#### current output
 ```bash
 2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #97 => Date=2024-12-31 O=138.03 H=138.07 L=133.83 C=134.29 Vol=155659211
 2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #98 => Date=2025-01-02 O=136.00 H=138.88 L=134.63 C=138.31 Vol=198247166
