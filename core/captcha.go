@@ -2,9 +2,10 @@ package core
 
 import (
 	"fmt"
+	"os"
+
 	capsolver_go "github.com/capsolver/capsolver-go"
 	"github.com/rs/zerolog/log"
-	"os"
 )
 
 func solveCaptcha() (string, error) {

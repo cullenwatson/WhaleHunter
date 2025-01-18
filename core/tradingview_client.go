@@ -2,29 +2,34 @@ package core
 
 import (
 	"crypto/tls"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
 
+	"github.com/cullenwatson/WhaleHunter/indicator"
 	"github.com/gorilla/websocket"
+	"github.com/rs/zerolog/log"
 )
 
 type TradingViewClient struct {
-	Symbol    string
-	Timeframe string
-	Candles   int
-	AuthToken string
-	Ws        *websocket.Conn
+	Symbol        string
+	Timeframe     string
+	Candles       int
+	AuthToken     string
+	Ws            *websocket.Conn
+	IndicatorName string
 }
 
-func NewTradingViewClient(symbol, timeframe string, candles int, authToken string) *TradingViewClient {
+func NewTradingViewClient(symbol, timeframe string, candles int, authToken string, indicatorName string) *TradingViewClient {
 	return &TradingViewClient{
-		Symbol:    symbol,
-		Timeframe: timeframe,
-		Candles:   candles,
-		AuthToken: authToken,
+		Symbol:        symbol,
+		Timeframe:     timeframe,
+		Candles:       candles,
+		AuthToken:     authToken,
+		IndicatorName: indicatorName,
 	}
 }
 
@@ -42,7 +47,7 @@ func (tv *TradingViewClient) Connect() error {
 	headers.Set("Pragma", "no-cache")
 	headers.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 
-	ws, _, err := dialer.Dial("wss://prodata.tradingview.com/socket.io/websocket", headers)
+	ws, _, err := dialer.Dial("wss://prodata.tradingview.com/socket.io/websocket?type=chart", headers)
 	if err != nil {
 		return fmt.Errorf("failed to connect to websocket: %w", err)
 	}
@@ -95,7 +100,14 @@ func (tv *TradingViewClient) SendMessage(functionName string, params interface{}
 func (tv *TradingViewClient) Run() error {
 	// 1. Generate a chart session
 	chartSession := generateChartSession()
-	fmt.Println("chartSession:", tv.Symbol)
+
+	log.Info().
+		Str("symbol", tv.Symbol).
+		Str("timeframe", tv.Timeframe).
+		Int("candles", tv.Candles).
+		Str("chart_session", chartSession).
+		Str("indicator_name", tv.IndicatorName).
+		Msg("Starting TradingView client session")
 
 	// 2. Build a JSON-like string referencing the symbol
 	symbolString := fmt.Sprintf("={\"adjustment\":\"splits\",\"currency-id\":\"USD\",\"session\":\"regular\",\"symbol\":\"%s\"}", tv.Symbol)
@@ -111,7 +123,7 @@ func (tv *TradingViewClient) Run() error {
 	}
 
 	// 5. Resolve the symbol
-	symbolLabel := "sds_sym_2"
+	symbolLabel := "sds_sym_1"
 	if err := tv.SendMessage("resolve_symbol", []interface{}{chartSession, symbolLabel, symbolString}); err != nil {
 		return err
 	}
@@ -127,6 +139,23 @@ func (tv *TradingViewClient) Run() error {
 		tv.Timeframe,
 		tv.Candles,
 		"",
+	}); err != nil {
+		return err
+	}
+
+	// 7. Attach study to the series
+	indicatorLabel := "st1"
+	superTrendScript, err := indicator.GetIndicatorScript(tv.IndicatorName)
+	if err != nil {
+		return err
+	}
+	if err := tv.SendMessage("create_study", []interface{}{
+		chartSession,
+		indicatorLabel,
+		indicatorLabel,
+		seriesLabel,
+		"Script@tv-scripting-101!",
+		superTrendScript,
 	}); err != nil {
 		return err
 	}

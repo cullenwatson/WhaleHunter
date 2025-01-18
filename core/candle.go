@@ -3,9 +3,10 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cullenwatson/WhaleHunter/model"
 	"strings"
 	"time"
+
+	"github.com/cullenwatson/WhaleHunter/model"
 )
 
 func ExtractCandles(msg string) ([]model.Candle, error) {

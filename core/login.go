@@ -4,24 +4,25 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/cullenwatson/WhaleHunter/model"
-	"github.com/rs/zerolog/log"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/cullenwatson/WhaleHunter/model"
+	"github.com/rs/zerolog/log"
 )
 
 const tokenFile = "auth_token.txt"
 
 func getTokenPath() string {
-	homeDir, err := os.UserHomeDir()
+	currentDir, err := os.Getwd()
 	if err != nil {
 		return tokenFile
 	}
-	return filepath.Join(homeDir, ".tradingview", tokenFile)
+	return filepath.Join(currentDir, tokenFile)
 }
 
 func saveAuthToken(token string) error {

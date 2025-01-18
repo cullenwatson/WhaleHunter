@@ -1,8 +1,13 @@
 # Roadmap
+
 Goal - auto place option trades based on custom indicators and whale option volume
+
 ### Phase 1 - TradingView connection
+
 1. ~~Sign into TradingView and solve the captcha~~
+
 * ~~Save the cookies in case restart of program~~
+
 2. ~~Start websocket connection to TradingView~~
 3. ~~Receive and parse stock feed~~
 4. Receive custom indicator data
@@ -14,14 +19,17 @@ Goal - auto place option trades based on custom indicators and whale option volu
 - they dont give custom indicator values that are only available in your acc (private scripts)
 
 ### Phase 2 - UnusualWhales
+
 1. Connect to unusualwhales or cheddarflow
 2. Allow custom tracking / filters
 
 ### Phase 3 - Merge phase 1 & 2 for confluence
+
 1. Connect the TradingView and unusualwhale microservice
 2. Alert if both are confluent
 
 ### Phase 4 - Auto trade
+
 1. ThinkOrSwim microservice
 2. Auto purchase the option
 3. Highly configurable for the trades desired
@@ -29,6 +37,7 @@ Goal - auto place option trades based on custom indicators and whale option volu
 5. View open positions
 
 #### current usage
+
 ```go
 func main() {
     LoadEnvVars()
@@ -60,7 +69,9 @@ func main() {
     log.Info().Msg("Candle channel closed. Exiting.")
 }
 ```
+
 #### current output
+
 ```bash
 2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #96 => Date=2024-12-30 O=134.83 H=140.27 L=134.02 C=137.49 Vol=167734700
 2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #97 => Date=2024-12-31 O=138.03 H=138.07 L=133.83 C=134.29 Vol=155659211
