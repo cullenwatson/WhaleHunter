@@ -10,7 +10,7 @@ Goal - auto place option trades based on custom indicators and whale option volu
 
 2. ~~Start websocket connection to TradingView~~
 3. ~~Receive and parse stock feed~~
-4. Receive custom indicator data
+4. ~~Receive custom indicator data~~
 5. Support concurrent connection feeds to multiple stock symbols
 
 #### why not other repos for Phase 1
@@ -40,41 +40,24 @@ Goal - auto place option trades based on custom indicators and whale option volu
 
 ```go
 func main() {
-    LoadEnvVars()
-
-    authToken := GetAuthToken()
-
-    symbol := "NVDA"
-    timeframe := "1D"
-    candlesRequested := 100
-
-    client := CreateTradingViewClient(symbol, timeframe, candlesRequested, authToken)
-
-    candleChan := make(chan []model.Candle)
-    go RunTradingViewClient(client, candleChan)
-
-    // Listen for new candles
-    for candleBatch := range candleChan {
-        for i, c := range candleBatch {
-            log.Info().Msgf(
-                "[MAIN] %s Candle #%d => Date=%s O=%.2f H=%.2f L=%.2f C=%.2f Vol=%.0f",
-                symbol,
-                i+1,
-                c.Date.Format("2006-01-02"),
-                c.Open, c.High, c.Low, c.Close, c.Volume,
-            )
-        }
+    cfg := core.SessionConfig{
+        Symbol:              "NVDA",
+        Timeframe:             "1D",
+        CandlesRequested:         5,
+        AuthToken:        authToken,
+        Indicators:       []string{"SuperTrend", "MMRI"},
     }
-
-    log.Info().Msg("Candle channel closed. Exiting.")
+    go core.RunTradingViewSession(cfg)
 }
 ```
 
 #### current output
-
 ```bash
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #96 => Date=2024-12-30 O=134.83 H=140.27 L=134.02 C=137.49 Vol=167734700
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #97 => Date=2024-12-31 O=138.03 H=138.07 L=133.83 C=134.29 Vol=155659211
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #98 => Date=2025-01-02 O=136.00 H=138.88 L=134.63 C=138.31 Vol=198247166
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #99 => Date=2025-01-03 O=140.01 H=144.90 L=139.73 C=144.47 Vol=229322478
-2025-01-07T06:35:24-06:00 | INFO  | [MAIN] NVDA Candle #100 => Date=2025-01-06 O=148.59 H=152.16 L=147.82 C=149.43 Vol=265377359```
+NVDA Candle:  1 => Date=2025-01-13 O=129.99 H=133.49 L=129.51 C=133.23 Vol=204808914
+NVDA Candle:  2 => Date=2025-01-14 O=136.05 H=136.38 L=130.05 C=131.76 Vol=195590485
+NVDA Candle:  3 => Date=2025-01-15 O=133.65 H=136.45 L=131.29 C=136.24 Vol=185217338
+NVDA Candle:  4 => Date=2025-01-16 O=138.64 H=138.75 L=133.49 C=133.57 Vol=209235583
+NVDA Candle:  5 => Date=2025-01-17 O=136.69 H=138.50 L=135.46 C=137.71 Vol=201188760
+NVDA Indicator: SuperTrend => bearish
+NVDA Indicator: MMRI => 312.19
+```

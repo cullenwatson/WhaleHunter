@@ -3,28 +3,31 @@ package core
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/cullenwatson/WhaleHunter/indicator"
+	"net/http"
+
+	"github.com/cullenwatson/WhaleHunter/internal/indicator"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog/log"
-	"net/http"
 )
 
 type TradingViewClient struct {
-	Symbol     string
-	Timeframe  string
-	Candles    int
-	AuthToken  string
-	Ws         *websocket.Conn
-	Indicators []string
+	Symbol       string
+	Timeframe    string
+	Candles      int
+	AuthToken    string
+	Ws           *websocket.Conn
+	Indicators   []string
+	IndicatorMap map[string]string
 }
 
 func NewTradingViewClient(symbol, timeframe string, candles int, authToken string, indicators []string) *TradingViewClient {
 	return &TradingViewClient{
-		Symbol:     symbol,
-		Timeframe:  timeframe,
-		Candles:    candles,
-		AuthToken:  authToken,
-		Indicators: indicators,
+		Symbol:       symbol,
+		Timeframe:    timeframe,
+		Candles:      candles,
+		AuthToken:    authToken,
+		Indicators:   indicators,
+		IndicatorMap: make(map[string]string),
 	}
 }
 
@@ -46,13 +49,6 @@ func (tv *TradingViewClient) Connect() error {
 
 	tv.Ws = ws
 	return nil
-}
-func (tv *TradingViewClient) SendMessage(functionName string, params interface{}) error {
-	if tv.Ws == nil {
-		return fmt.Errorf("websocket is not connected")
-	}
-	msg := createMessage(functionName, params)
-	return tv.Ws.WriteMessage(websocket.TextMessage, []byte(msg))
 }
 
 func (tv *TradingViewClient) Run() error {
@@ -92,14 +88,15 @@ func (tv *TradingViewClient) Run() error {
 		return err
 	}
 
-	// Loop over each indicator, adding each study
 	for i, indName := range tv.Indicators {
-		stLabel := fmt.Sprintf("st%d", i+1) // e.g. "st1","st2", etc.
+		stLabel := fmt.Sprintf("st%d", i+1)
+
+		tv.IndicatorMap[stLabel] = indName
+
 		studyScript, err := indicator.GetIndicatorScript(indName)
 		if err != nil {
 			return err
 		}
-		// create_study
 		if err := tv.SendMessage("create_study", []interface{}{
 			chartSession,
 			stLabel,
@@ -113,4 +110,12 @@ func (tv *TradingViewClient) Run() error {
 	}
 
 	return nil
+}
+
+func (tv *TradingViewClient) SendMessage(functionName string, params interface{}) error {
+	if tv.Ws == nil {
+		return fmt.Errorf("websocket is not connected")
+	}
+	msg := createMessage(functionName, params)
+	return tv.Ws.WriteMessage(websocket.TextMessage, []byte(msg))
 }

@@ -11,7 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cullenwatson/WhaleHunter/model"
+	"github.com/cullenwatson/WhaleHunter/internal/model"
+
 	"github.com/rs/zerolog/log"
 )
 

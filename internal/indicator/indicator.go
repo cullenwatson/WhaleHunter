@@ -3,7 +3,9 @@ package indicator
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 )
 
 //go:embed scripts/supertrend.json
@@ -51,4 +53,28 @@ func mustUnmarshal(raw string) map[string]interface{} {
 		panic(fmt.Sprintf("Failed to unmarshal embedded script: %v", err))
 	}
 	return obj
+}
+
+func ExtractStudyLabel(rawJSON string) (string, error) {
+	var top duMessage
+	if err := json.Unmarshal([]byte(rawJSON), &top); err != nil {
+		return "", err
+	}
+	if top.M != "du" || len(top.P) < 2 {
+		return "", errors.New("not a valid 'du' message with 2+ params")
+	}
+
+	// The second item in P is the big object: e.g. {"st1":{...}} or {"st2":{...}}
+	var stMap map[string]json.RawMessage
+	if err := json.Unmarshal(top.P[1], &stMap); err != nil {
+		return "", err
+	}
+
+	// Return whichever key looks like st1, st2, etc.
+	for k := range stMap {
+		if strings.HasPrefix(k, "st") {
+			return k, nil
+		}
+	}
+	return "", errors.New("no stN label found in du message")
 }

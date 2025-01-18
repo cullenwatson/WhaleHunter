@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cullenwatson/WhaleHunter/model"
+	"github.com/cullenwatson/WhaleHunter/internal/model"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 )
@@ -40,7 +40,7 @@ func LoadEnvVarsOrDie() {
 func HandleCandleBatch(symbol string, candles []model.Candle) {
 	for i, c := range candles {
 		log.Info().Msgf(
-			"[MAIN] %s Candle #%d => Date=%s O=%.2f H=%.2f L=%.2f C=%.2f Vol=%.0f",
+			"%s Candle: %4d => Date=%s O=%.2f H=%.2f L=%.2f C=%.2f Vol=%.0f",
 			symbol, i+1, c.Date.Format("2006-01-02"),
 			c.Open, c.High, c.Low, c.Close, c.Volume,
 		)

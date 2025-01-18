@@ -1,54 +1,47 @@
 package main
 
 import (
-	"os"
-	"time"
+	"github.com/cullenwatson/WhaleHunter/internal/core"
+	"github.com/cullenwatson/WhaleHunter/internal/model"
 
-	"github.com/cullenwatson/WhaleHunter/core"
-	"github.com/cullenwatson/WhaleHunter/model"
-	"github.com/rs/zerolog"
+	mylog "github.com/cullenwatson/WhaleHunter/internal/log"
 	"github.com/rs/zerolog/log"
 )
 
-func init() {
-	output := zerolog.ConsoleWriter{
-		Out:        os.Stdout,
-		TimeFormat: time.RFC3339,
-	}
-	log.Logger = zerolog.New(output).With().Timestamp().Logger()
-}
-
 func main() {
+	mylog.InitLogger()
 	core.LoadEnvVarsOrDie()
 
 	authToken := core.GetTradinViewAuthToken()
 
-	symbol := "NKE"
-	timeframe := "1D"
-	candlesRequested := 100
+	cfg := core.SessionConfig{
+		Symbol:           "NVDA",
+		Timeframe:        "1D",
+		CandlesRequested: 5,
+		AuthToken:        authToken,
+		Indicators:       []string{"SuperTrend", "MMRI"},
 
-	indicators := []string{"SuperTrend", "MMRI"}
+		CandleChan:    make(chan []model.Candle),
+		IndicatorChan: make(chan string),
+	}
 
-	candleChan := make(chan []model.Candle)
-	indicatorChan := make(chan string)
-
-	go core.RunTradingViewSession(symbol, timeframe, candlesRequested, authToken, indicators, candleChan, indicatorChan)
+	go core.RunTradingViewSession(cfg)
 
 	for {
 		select {
-		case candleBatch, ok := <-candleChan:
+		case candleBatch, ok := <-cfg.CandleChan:
 			if !ok {
 				log.Info().Msg("Candle channel closed. Exiting.")
 				return
 			}
-			core.HandleCandleBatch(symbol, candleBatch)
+			core.HandleCandleBatch(cfg.Symbol, candleBatch)
 
-		case studyResult, ok := <-indicatorChan:
+		case studyResult, ok := <-cfg.IndicatorChan:
 			if !ok {
 				log.Info().Msg("Indicator channel closed. Exiting.")
 				return
 			}
-			log.Info().Msgf("[MAIN] %s Study Update: %s", symbol, studyResult)
+			log.Info().Msgf("%s %s: %s", cfg.Symbol, "Indicator", studyResult)
 		}
 	}
 }
