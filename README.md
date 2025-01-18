@@ -36,6 +36,8 @@ Goal - auto place option trades based on custom indicators and whale option volu
 4. set take profit / stop loss and monitor win rate
 5. View open positions
 
+(optional) notify of auto placed trades via messaging app
+
 #### current usage
 
 ```go
