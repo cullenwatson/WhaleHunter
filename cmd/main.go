@@ -23,15 +23,16 @@ func main() {
 
 	authToken := core.GetTradinViewAuthToken()
 
-	symbol := "LYFT"
+	symbol := "NKE"
 	timeframe := "1D"
 	candlesRequested := 100
-	indicatorName := "supertrend"
+
+	indicators := []string{"SuperTrend", "MMRI"}
 
 	candleChan := make(chan []model.Candle)
 	indicatorChan := make(chan string)
 
-	go core.RunTradingViewSession(symbol, timeframe, candlesRequested, authToken, indicatorName, candleChan, indicatorChan)
+	go core.RunTradingViewSession(symbol, timeframe, candlesRequested, authToken, indicators, candleChan, indicatorChan)
 
 	for {
 		select {

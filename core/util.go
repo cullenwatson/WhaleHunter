@@ -1,7 +1,11 @@
 package core
 
 import (
+	"encoding/json"
+	"fmt"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/cullenwatson/WhaleHunter/model"
 	"github.com/joho/godotenv"
@@ -41,4 +45,32 @@ func HandleCandleBatch(symbol string, candles []model.Candle) {
 			c.Open, c.High, c.Low, c.Close, c.Volume,
 		)
 	}
+}
+
+// createMessage replicates "~m~<len>~m~<json>" format
+func createMessage(functionName string, paramList interface{}) string {
+	payload := map[string]interface{}{
+		"m": functionName,
+		"p": paramList,
+	}
+	jsonBytes, _ := json.Marshal(payload)
+	jsonStr := string(jsonBytes)
+	return fmt.Sprintf("~m~%d~m~%s", len(jsonStr), jsonStr)
+}
+
+// generateRandomString helper for session generation
+func generateRandomString(n int) string {
+	letters := []rune("abcdefghijklmnopqrstuvwxyz")
+	rand.Seed(time.Now().UnixNano())
+
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+// generateChartSession returns something like "cs_abcdef..."
+func generateChartSession() string {
+	return "cs_" + generateRandomString(12)
 }

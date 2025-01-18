@@ -6,11 +6,11 @@ import (
 	"fmt"
 )
 
-//go:embed scripts/super_trend.json
-var superTrendRaw string
+//go:embed scripts/supertrend.json
+var superTrendScript string
 
-//go:embed scripts/rsi.json
-var rsiRaw string
+//go:embed scripts/mmri.json
+var mmriScript string
 
 type IndicatorDefinition struct {
 	Name      string
@@ -22,17 +22,19 @@ type IndicatorDefinition struct {
 var Indicators = map[string]*IndicatorDefinition{}
 
 func init() {
-	Indicators["supertrend"] = &IndicatorDefinition{
-		Name:      "supertrend",
-		Script:    mustUnmarshal(superTrendRaw),
+	var indicator = "SuperTrend"
+	Indicators[indicator] = &IndicatorDefinition{
+		Name:      indicator,
+		Script:    mustUnmarshal(superTrendScript),
 		ParseFunc: parseSuperTrend,
 	}
 
-	//Indicators["rsi"] = &IndicatorDefinition{
-	//	Name:      "rsi",
-	//	Script:    mustUnmarshal(rsiRaw),
-	//	ParseFunc: parseRsi,
-	//}
+	indicator = "MMRI"
+	Indicators[indicator] = &IndicatorDefinition{
+		Name:      indicator,
+		Script:    mustUnmarshal(mmriScript),
+		ParseFunc: parseMMRI,
+	}
 }
 
 func GetIndicatorScript(indicatorName string) (map[string]interface{}, error) {
@@ -43,7 +45,6 @@ func GetIndicatorScript(indicatorName string) (map[string]interface{}, error) {
 	return ind.Script, nil
 }
 
-// mustUnmarshal is a small helper that unmarshals embedded JSON or panics
 func mustUnmarshal(raw string) map[string]interface{} {
 	var obj map[string]interface{}
 	if err := json.Unmarshal([]byte(raw), &obj); err != nil {

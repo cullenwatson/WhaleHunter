@@ -10,14 +10,15 @@ import (
 )
 
 func RunTradingViewSession(
-	symbol, timeframe string,
+	symbol string,
+	timeframe string,
 	candlesRequested int,
 	authToken string,
-	indicatorName string,
+	indicators []string,
 	candleChan chan<- []model.Candle,
 	indicatorChan chan<- string,
 ) {
-	tvClient := NewTradingViewClient(symbol, timeframe, candlesRequested, authToken, indicatorName)
+	tvClient := NewTradingViewClient(symbol, timeframe, candlesRequested, authToken, indicators)
 
 	// Connect
 	if err := tvClient.Connect(); err != nil {
@@ -25,7 +26,7 @@ func RunTradingViewSession(
 	}
 	defer tvClient.Ws.Close()
 
-	// Start the TV client (create_series, create_study, etc.)
+	// Start the TV client
 	if err := tvClient.Run(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to run")
 	}
@@ -37,29 +38,34 @@ func RunTradingViewSession(
 			log.Error().Err(err).Msg("Websocket read error")
 			break
 		}
-		log.Info().Msgf("Received: %s", string(rawMsg))
 
-		// Split out all possible JSON chunks
+		// Parse out potential JSON chunks
 		jsonChunks := ParseMultipleMessages(string(rawMsg))
 		for _, chunk := range jsonChunks {
-			// A) Try timescale_update → handle as candle data
-			candles, err := ExtractCandles(chunk)
-			if err == nil {
+			log.Info().Msgf("Received: %s", chunk)
+
+			// A) Candle data?
+			if candles, err := ExtractCandles(chunk); err == nil {
 				candleChan <- candles
 				continue
 			}
 
-			// B) Otherwise, if it’s a "du" message, parse with the chosen indicator
+			// B) "du" study data => we try *each* indicator
 			if strings.Contains(chunk, "\"du\"") {
-				parseFunc := indicator.Indicators[indicatorName].ParseFunc
-				result, parseErr := parseFunc(chunk)
-				if parseErr != nil {
-					log.Debug().Err(parseErr).Str("chunk", chunk).
-						Msg("Skipping or error in parse for du chunk")
-					continue
+				for _, indName := range tvClient.Indicators {
+					parseFunc := indicator.Indicators[indName].ParseFunc
+					result, parseErr := parseFunc(chunk)
+					if parseErr == nil {
+						// e.g. "MMRI => 12.3456"
+						// or "SuperTrend => bullish"
+						indicatorChan <- fmt.Sprintf("%s => %s", indName, result)
+					} else {
+						// It's normal if the chunk doesn't match this particular indicator
+						log.Debug().Err(parseErr).
+							Str("indicator", indName).
+							Msg("Skipping parse result for chunk")
+					}
 				}
-				// e.g. "supertrend => bullish"
-				indicatorChan <- fmt.Sprintf("%s => %s", indicatorName, result)
 			}
 		}
 	}

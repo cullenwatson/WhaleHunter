@@ -6,25 +6,6 @@ import (
 	"fmt"
 )
 
-type duMessage struct {
-	M string            `json:"m"`
-	P []json.RawMessage `json:"p"`
-}
-
-type stBar struct {
-	I int       `json:"i"`
-	V []float64 `json:"v"`
-}
-
-type st1Payload struct {
-	Node string  `json:"node"`
-	St   []stBar `json:"st"`
-}
-
-type studyPayload struct {
-	St1 st1Payload `json:"st1"`
-}
-
 func parseSuperTrend(rawJSON string) (string, error) {
 	var top duMessage
 	if err := json.Unmarshal([]byte(rawJSON), &top); err != nil {
